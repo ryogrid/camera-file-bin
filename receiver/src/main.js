@@ -16,7 +16,7 @@ async function startCamera() {
 
         const hints = new Map();
         hints.set(DecodeHintType.TRY_HARDER, true);
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.DATA_MATRIX]);
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]);
         
         let decodeCount = 0;
         let validFrameCount = 0;
@@ -49,21 +49,34 @@ async function startCamera() {
                     lastInvalidText = '';
                 }
                 
-                // Log short reads (likely errors)
-                if (text.length < 50) {
-                    if (sameInvalidCount <= 5) {
-                        console.log('Short read (' + text.length + ' chars): ' + text);
+                // Log what we're reading
+                if (text.length < 100) {
+                    if (sameInvalidCount <= 2) {
+                        console.log('Read (' + text.length + ' chars): ' + text);
+                    }
+                } else {
+                    if (sameInvalidCount <= 2) {
+                        console.log('Read (' + text.length + ' chars): ' + text.substring(0, 100) + '...');
                     }
                 }
                 
                 try {
                     const parsed = JSON.parse(text);
                     
-                    if (typeof parsed !== 'object' || parsed === null || !parsed.sessionId) {
+                    if (typeof parsed !== 'object' || parsed === null) {
                         invalidCount++;
                         lastInvalidText = text;
                         if (sameInvalidCount <= 1) {
-                            console.log('Invalid frame type: ' + typeof parsed);
+                            console.log('Not an object: ' + typeof parsed);
+                        }
+                        return;
+                    }
+                    
+                    if (!parsed.sessionId) {
+                        invalidCount++;
+                        lastInvalidText = text;
+                        if (sameInvalidCount <= 1) {
+                            console.log('Missing sessionId. Keys: ' + Object.keys(parsed).join(', '));
                         }
                         return;
                     }

@@ -9,8 +9,9 @@ const canvas = document.getElementById('canvas');
 // キャンバスサイズを動的に調整
 function adjustCanvasSize() {
     const container = document.querySelector('.canvas-container');
-    const maxWidth = Math.min(600, window.innerWidth - 40);  // 大きくした
-    const maxHeight = Math.min(600, window.innerHeight * 0.7); // 大きくした
+    // より大きなサイズで表示
+    const maxWidth = Math.min(800, window.innerWidth - 40);
+    const maxHeight = Math.min(800, window.innerHeight * 0.8);
     const size = Math.min(maxWidth, maxHeight);
     
     canvas.width = size;
@@ -60,12 +61,12 @@ startBtn.addEventListener('click', async () => {
     const shardSize = parseInt(document.getElementById('shardSize').value, 10) || 1024;
     const parity = parseInt(document.getElementById('parity').value, 10) || 4;
 
-    status.textContent = 'Aztec 最大容量計算中...';
+    status.textContent = 'QRコード 最大容量計算中...';
     
     // より安全な最大ペイロードサイズを設定（小さくして読み取りやすく）
-    const MAX_AZTEC_BYTES = 400; // さらに小さくして確実に
+    const MAX_QR_BYTES = 200; // QRコードの最大ペイロード
     
-    status.textContent = `Aztec 最大ペイロード: ${MAX_AZTEC_BYTES} bytes (固定値)`;
+    status.textContent = `QRコード 最大ペイロード: ${MAX_QR_BYTES} bytes (固定値)`;
 
     status.textContent = 'ファイル読み込み中...';
     const arrayBuffer = await file.arrayBuffer();
@@ -73,23 +74,9 @@ startBtn.addEventListener('click', async () => {
     status.textContent = 'シャード符号化中...';
     const { shards, K, N, sessionId, originalSize } = await encodeShards(arrayBuffer, shardSize, parity);
 
-    console.log('エンコード結果:', { shardsLength: shards.length, K, N, sessionId, originalSize });
-    console.log('各シャードの長さ:', shards.map((s, i) => s ? s.length : 'undefined'));
+    console.log('エンコード結果: ' + shards.length + ' シャード, K=' + K + ', N=' + N + ', サイズ=' + originalSize);
 
-    // 最初のフレームのJSONサイズをチェック
-    const testFrame = {
-        sessionId,
-        shardIndex: 0,
-        subIndex: 0,
-        totalSub: 1,
-        K,
-        N,
-        originalSize,
-        payload: 'test'
-    };
-    console.log('テストフレームJSON長:', JSON.stringify(testFrame).length);
-
-    // シャードを Aztec に収まるサブシャードに分割
+    // シャードを QRコードに収まるサブシャードに分割
     const frames = [];
     for (let idx = 0; idx < shards.length; idx++) {
         const shard = shards[idx];
@@ -98,10 +85,10 @@ startBtn.addEventListener('click', async () => {
             continue;
         }
         
-        const totalSub = Math.ceil(shard.length / MAX_AZTEC_BYTES);
+        const totalSub = Math.ceil(shard.length / MAX_QR_BYTES);
         for (let subIdx = 0; subIdx < totalSub; subIdx++) {
-            const start = subIdx * MAX_AZTEC_BYTES;
-            const end = Math.min(start + MAX_AZTEC_BYTES, shard.length);
+            const start = subIdx * MAX_QR_BYTES;
+            const end = Math.min(start + MAX_QR_BYTES, shard.length);
             const subPayload = shard.slice(start, end);
 
             try {
@@ -149,8 +136,60 @@ startBtn.addEventListener('click', async () => {
         });
     }
 
+    // === 事前にすべてのQRコード画像を生成してキャッシュ ===
+    status.textContent = 'QRコード画像を生成中...';
+    console.log('=== QRコード画像を事前生成してキャッシュします ===');
+    
+    const qrImageCache = [];
+    const tempCanvas = document.createElement('canvas');
+    const maxWidth = Math.min(800, window.innerWidth * 0.9);
+    const maxHeight = Math.min(800, window.innerHeight * 0.8);
+    tempCanvas.width = maxWidth;
+    tempCanvas.height = maxHeight;
+    const optimalScale = Math.max(3, Math.floor(maxWidth / 120));
+    
+    for (let i = 0; i < frames.length; i++) {
+        const frame = frames[i];
+        const json = JSON.stringify(frame);
+        
+        try {
+            await BWIPJS.toCanvas(tempCanvas, {
+                bcid: 'qrcode',
+                text: json,
+                scale: optimalScale,
+                includetext: false,
+                paddingwidth: 5,
+                eclevel: 'M',
+                paddingheight: 5
+            });
+            
+            // Canvas内容をImageDataとして保存
+            const ctx = tempCanvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            qrImageCache.push(imageData);
+            
+            if ((i + 1) % 50 === 0 || i === frames.length - 1) {
+                status.textContent = `QRコード生成中 ${i + 1}/${frames.length}`;
+                console.log(`QRコード生成: ${i + 1}/${frames.length}`);
+            }
+        } catch (e) {
+            console.error(`QRコード生成エラー (フレーム ${i}):`, e);
+            qrImageCache.push(null);
+        }
+    }
+    
+    console.log(`=== ${qrImageCache.length} 個のQRコード画像をキャッシュしました ===`);
+    
+    // メモリ使用量をログ
+    if (performance && performance.memory) {
+        const memMB = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+        console.log(`キャッシュ後のメモリ使用量: ${memMB} MB`);
+    }
+
     // 連続描画
     let frameIdx = 0;
+    let loopCount = 0;
+    const maxLoops = 10; // キャッシュがあるので10周に戻す
     const intervalMs = 1000; // 1秒に延長（より確実な読み取りのため）
     
     // 最初に3秒待機（カメラ準備のため）
@@ -159,59 +198,88 @@ startBtn.addEventListener('click', async () => {
 
     const showNext = async () => {
         if (frameIdx >= frames.length) {
-            status.textContent = '送信1周完了 - 繰り返します';
+            loopCount++;
+            if (loopCount >= maxLoops) {
+                status.textContent = `送信完了 (${maxLoops}周) - 再送信するにはリロードしてください`;
+                console.log(`=== ${maxLoops}周完了。メモリ節約のため停止しました ===`);
+                return;
+            }
+            status.textContent = `送信${loopCount}周完了 - 繰り返します (${loopCount}/${maxLoops})`;
+            
+            // メモリ使用量をログ
+            if (performance && performance.memory) {
+                const memMB = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+                const limitMB = (performance.memory.jsHeapSizeLimit / 1048576).toFixed(1);
+                console.log(`=== メモリ使用量: ${memMB} MB / ${limitMB} MB ===`);
+            }
+            
             // 最初に戻って繰り返し送信
             frameIdx = 0;
-            console.log('=== フレーム送信を最初から繰り返します ===');
-            setTimeout(showNext, 2000); // 2秒待ってから再開
+            console.log(`=== フレーム送信を最初から繰り返します (${loopCount}周目) ===`);
+            
+            // キャンバスをクリア
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // メモリ解放のヒント
+            if (typeof gc !== 'undefined') {
+                gc();
+            }
+            
+            setTimeout(showNext, 3000); // 3秒待ってから再開（メモリ解放の時間）
             return;
         }
 
         const frame = frames[frameIdx];
+        const cachedImage = qrImageCache[frameIdx];
+        
         if (!frame) {
             console.error(`フレーム ${frameIdx} が undefined です`);
             frameIdx++;
             setTimeout(showNext, intervalMs);
             return;
         }
-
-        const json = JSON.stringify(frame);
-        console.log(`[送信 ${frameIdx + 1}/${frames.length}] シャード${frame.shardIndex}, サブ${frame.subIndex} (JSON: ${json.length}bytes)`);
-
-        try {
-            // canvasサイズに基づいてスケールを計算
-            const optimalScale = Math.max(3, Math.floor(canvas.width / 150));
-            
-            // canvasをクリア
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Data Matrixコードを生成（パブリックドメイン）
-            await BWIPJS.toCanvas(canvas, {
-                bcid: 'datamatrix',
-                text: json,
-                scale: optimalScale,
-                includetext: false,
-                paddingwidth: 5,
-                paddingheight: 5
-            });
-            
-            console.log(`送信フレーム ${frameIdx + 1}/${frames.length}: シャード${frame.shardIndex}, サブ${frame.subIndex}`);
-        } catch (e) {
-            console.error('bwip-js error', e);
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#000';
-            ctx.font = '10px monospace';
-            ctx.fillText(`Error: ${e.message}`, 10, 20);
-            if (json) {
-                ctx.fillText(json.slice(0, 100) + '...', 10, 40);
-            }
+        
+        // メモリ使用量をログ（可能な場合）
+        if (frameIdx % 50 === 0 && performance && performance.memory) {
+            const memMB = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+            console.log(`[メモリ] ${memMB} MB 使用中`);
+        }
+        
+        if (frameIdx % 100 === 0) {
+            console.log(`[送信 ${frameIdx + 1}/${frames.length}] シャード${frame.shardIndex}, サブ${frame.subIndex}`);
         }
 
-        status.textContent = `送信中 ${frameIdx + 1} / ${frames.length} | シャード ${frame.shardIndex}/${frame.K-1}, サブ ${frame.subIndex}/${frame.totalSub-1}`;
+        // Canvasコンテキストを取得（再利用）
+        const ctx = canvas.getContext('2d', { willReadFrequently: false });
+        
+        try {
+            // キャッシュした画像を使用（再生成不要！）
+            if (cachedImage) {
+                ctx.putImageData(cachedImage, 0, 0);
+            } else {
+                // キャッシュがない場合のフォールバック
+                console.warn(`フレーム ${frameIdx} のキャッシュがありません`);
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#f00';
+                ctx.font = '20px monospace';
+                ctx.fillText('Cache Missing', 10, 30);
+            }
+        } catch (e) {
+            console.error('画像表示エラー', e);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#f00';
+            ctx.font = '12px monospace';
+            ctx.fillText(`Error: ${e.message}`, 10, 20);
+        }
+
+        status.textContent = `送信中 ${frameIdx + 1} / ${frames.length} | シャード ${frame.shardIndex}/${frame.K-1}, サブ ${frame.subIndex}/${frame.totalSub-1} (Loop ${loopCount + 1})`;
         frameIdx++;
+        
         setTimeout(showNext, intervalMs);
     };
 
