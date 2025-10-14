@@ -70,12 +70,19 @@
         
         <div id="status">カメラ起動中...</div>
         
-        <div id="debug-info" style="margin: 10px 0; padding: 10px; background-color: #f8f8f8; border-radius: 4px; font-family: monospace; font-size: 12px;">
-            <div>受信状況: <span id="reception-status">待機中</span></div>
-            <div>アクティブセッション: <span id="active-sessions">0</span></div>
-            <div>ファイル名: <span id="current-filename">-</span></div>
+        <div id="debug-info" style="margin: 10px 0; padding: 10px; background-color: #e8f4f8; border: 1px solid #4a90e2; border-radius: 4px; font-family: monospace; font-size: 11px;">
+            <div style="font-weight: bold; margin-bottom: 5px; color: #2c5aa0;">📊 受信状況</div>
+            <div>総読取: <span id="total-reads">0</span> | Valid: <span id="valid-frames">0</span> | Invalid: <span id="invalid-frames">0</span></div>
             <div>進捗: <span id="progress-info">-</span></div>
+            <div>ファイル: <span id="current-filename">-</span></div>
         </div>
+        
+        <details style="margin: 10px 0;">
+            <summary style="cursor: pointer; padding: 5px; background-color: #f0f0f0; border-radius: 4px; user-select: none;">🔍 詳細デバッグログ（タップして開く）</summary>
+            <div id="debug-log" style="margin-top: 5px; padding: 10px; background-color: #1e1e1e; color: #00ff00; border-radius: 4px; font-family: monospace; font-size: 10px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
+起動中...
+            </div>
+        </details>
         
         <div class="media-container">
             <video id="video" autoplay playsinline></video>

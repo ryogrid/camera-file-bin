@@ -152,6 +152,11 @@ startBtn.addEventListener('click', async () => {
         const frame = frames[i];
         const json = JSON.stringify(frame);
         
+        // 最初の数フレームの詳細をログ
+        if (i < 3) {
+            console.log(`フレーム ${i} JSON長: ${json.length} bytes`);
+        }
+        
         try {
             await BWIPJS.toCanvas(tempCanvas, {
                 bcid: 'qrcode',
@@ -168,12 +173,16 @@ startBtn.addEventListener('click', async () => {
             const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             qrImageCache.push(imageData);
             
+            if (i < 3) {
+                console.log(`フレーム ${i} QRコード生成成功 (ImageData: ${imageData.width}x${imageData.height})`);
+            }
+            
             if ((i + 1) % 50 === 0 || i === frames.length - 1) {
                 status.textContent = `QRコード生成中 ${i + 1}/${frames.length}`;
                 console.log(`QRコード生成: ${i + 1}/${frames.length}`);
             }
         } catch (e) {
-            console.error(`QRコード生成エラー (フレーム ${i}):`, e);
+            console.error(`QRコード生成エラー (フレーム ${i}, JSON長=${json.length}):`, e);
             qrImageCache.push(null);
         }
     }
@@ -242,14 +251,19 @@ startBtn.addEventListener('click', async () => {
             return;
         }
         
+        if (!cachedImage) {
+            console.error(`フレーム ${frameIdx} のキャッシュが null です！`);
+        }
+        
         // メモリ使用量をログ（可能な場合）
         if (frameIdx % 50 === 0 && performance && performance.memory) {
             const memMB = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
             console.log(`[メモリ] ${memMB} MB 使用中`);
         }
         
-        if (frameIdx % 100 === 0) {
-            console.log(`[送信 ${frameIdx + 1}/${frames.length}] シャード${frame.shardIndex}, サブ${frame.subIndex}`);
+        // 最初の10フレームと100フレームごとに詳細ログ
+        if (frameIdx < 10 || frameIdx % 100 === 0) {
+            console.log(`[送信 ${frameIdx + 1}/${frames.length}] シャード${frame.shardIndex}, サブ${frame.subIndex}, ループ${loopCount + 1}`);
         }
 
         // Canvasコンテキストを取得（再利用）
@@ -261,15 +275,15 @@ startBtn.addEventListener('click', async () => {
                 ctx.putImageData(cachedImage, 0, 0);
             } else {
                 // キャッシュがない場合のフォールバック
-                console.warn(`フレーム ${frameIdx} のキャッシュがありません`);
+                console.warn(`⚠️ フレーム ${frameIdx} のキャッシュがありません`);
                 ctx.fillStyle = '#fff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#f00';
                 ctx.font = '20px monospace';
-                ctx.fillText('Cache Missing', 10, 30);
+                ctx.fillText('Cache Missing: Frame ' + frameIdx, 10, 30);
             }
         } catch (e) {
-            console.error('画像表示エラー', e);
+            console.error('画像表示エラー (フレーム ' + frameIdx + '):', e);
             ctx.fillStyle = '#fff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#f00';
