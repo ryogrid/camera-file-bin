@@ -1,0 +1,12 @@
+This product includes third-party components:
+
+- bwip-js (MIT) - Barcode generation library (Aztec/DataMatrix etc.)
+  https://github.com/metafloor/bwip-js
+
+- @zxing/library (Apache-2.0 / MIT) - Barcode decoding in browser
+  https://github.com/zxing-js/library
+
+- @subspace/reed-solomon-erasure.wasm (MIT) - example Reed–Solomon erasure coding WASM
+  (If you use a different implementation, consult that package's license.)
+
+When redistributing, include the original licenses of above components.
