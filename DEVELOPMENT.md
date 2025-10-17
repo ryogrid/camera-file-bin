@@ -37,8 +37,8 @@ npm run preview
 
 1. Open the application in a web browser
 2. Click the "Send File" tab
-3. Click "ファイルを選択" (Choose File) and select the file you want to send
-4. Click "送信開始" (Start Transmission)
+3. Click "Choose File" button and select the file you want to send
+4. Click "Start Transmission" button
 5. QR codes will be displayed continuously - keep them visible to the receiving device
 
 ### Receiving Files
@@ -60,9 +60,9 @@ npm run preview
 ## Technical Details
 
 - **QR Code Display Rate**: 5 FPS (adjustable in Sender.tsx)
-- **Chunk Size**: 1000 bytes per QR code
+- **Chunk Size**: 800 bytes per QR code
 - **Redundancy**: 40% redundant shards for error correction
-- **Reconstruction Threshold**: Requires 60% of shards to reconstruct the file
+- **Reconstruction Threshold**: Requires 100% of unique shards to reconstruct the file
 
 ## Browser Compatibility
 
@@ -79,7 +79,7 @@ npm run preview
 - Check if camera is not being used by another application
 
 ### File Not Reconstructing
-- Ensure at least 60% of unique shards are received
+- Ensure all unique shards are received (check progress indicator)
 - Try scanning more slowly or from a closer distance
 - Increase lighting or adjust camera focus
 

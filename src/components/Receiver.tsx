@@ -30,8 +30,8 @@ function Receiver() {
       await qrCodeScanner.start(
         { facingMode: 'environment' }, // Use back camera
         {
-          fps: 5, // Reduced to match sender's frame rate
-          qrbox: { width: 300, height: 300 }, // Larger scan area
+          fps: 3, // Reduced to match slower sender frame rate
+          qrbox: { width: 350, height: 350 }, // Larger scan area for easier targeting
           aspectRatio: 1.0,
           disableFlip: false,
         },

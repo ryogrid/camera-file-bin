@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { splitFileIntoShards, type Shard } from '../utils/fileUtils'
 
-const FPS = 5 // Frames per second for QR code display
+const FPS = 2 // Frames per second for QR code display (reduced for better scan reliability)
 
 function Sender() {
   const [file, setFile] = useState<File | null>(null)
@@ -132,8 +132,8 @@ function Sender() {
           <div className="qr-display">
             <QRCodeSVG
               value={getQRData()}
-              size={400}
-              level="M"
+              size={480}
+              level="H"
               includeMargin={true}
             />
           </div>

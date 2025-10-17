@@ -12,7 +12,7 @@ export interface Shard {
   metadata: FileMetadata
 }
 
-const CHUNK_SIZE = 800 // Maximum bytes per QR code (smaller for better scan reliability)
+const CHUNK_SIZE = 500 // Maximum bytes per QR code (smaller for better scan reliability)
 
 /**
  * Convert a file to base64 string
