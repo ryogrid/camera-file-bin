@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#646cff"/>
+  <rect x="64" y="64" width="384" height="384" fill="white" rx="16"/>
+  
+  <!-- QR code pattern -->
+  <!-- Top-left corner -->
+  <rect x="96" y="96" width="112" height="112" fill="#646cff" rx="8"/>
+  <rect x="120" y="120" width="64" height="64" fill="white" rx="4"/>
+  
+  <!-- Top-right corner -->
+  <rect x="304" y="96" width="112" height="112" fill="#646cff" rx="8"/>
+  <rect x="328" y="120" width="64" height="64" fill="white" rx="4"/>
+  
+  <!-- Bottom-left corner -->
+  <rect x="96" y="304" width="112" height="112" fill="#646cff" rx="8"/>
+  <rect x="120" y="328" width="64" height="64" fill="white" rx="4"/>
+  
+  <!-- Center pattern -->
+  <rect x="240" y="240" width="32" height="32" fill="#646cff"/>
+  <rect x="240" y="288" width="32" height="32" fill="#646cff"/>
+  <rect x="288" y="240" width="32" height="32" fill="#646cff"/>
+  <rect x="288" y="288" width="32" height="32" fill="#646cff"/>
+  
+  <!-- Additional blocks -->
+  <rect x="240" y="336" width="32" height="32" fill="#646cff"/>
+  <rect x="288" y="336" width="32" height="32" fill="#646cff"/>
+  <rect x="336" y="240" width="32" height="32" fill="#646cff"/>
+  <rect x="336" y="288" width="32" height="32" fill="#646cff"/>
+  <rect x="336" y="336" width="32" height="32" fill="#646cff"/>
+</svg>

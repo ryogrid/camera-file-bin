@@ -1,0 +1,16 @@
+{
+  "name": "QR Code File Transfer",
+  "short_name": "QR Transfer",
+  "description": "Transfer files via QR codes between devices",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#646cff",
+  "background_color": "#242424",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
