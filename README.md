@@ -1,26 +1,20 @@
-# camera-file-bin (Data Matrix File Transfer)
+# camera-file-bin (QR Code File Transfer)
 
 ## 概要
-ブラウザでファイルを Data Matrix 形式の画像を連続表示し、スマホのカメラで撮影して復元する PoC。  
+ブラウザでファイルを QR形式の画像を連続表示し、スマホのカメラで撮影して復元する PoC。  
 シンプルな冗長性機能により、一部のフレームが欠損しても復元可能です。
 
 ## 特徴
 - 元のファイル名を保持してダウンロード
-- Data Matrixコード形式での画像送信（パブリックドメイン）
+- QRコード形式を活用した高速データ転送
 - シャード分割による大ファイル対応
 - 冗長性による誤り訂正機能
+- 送信側も受信側もSingle Page Application (SPA)
 
-## 開発手順
-1. クローン（またはこのファイル群を作成）
-2. `npm install`
-3. `npm run start:sender`（送信 SPA を localhost:1234 で起動）
-4. `npm run start:receiver`（受信 SPA を localhost:1235 で起動）
-   - `localhost` は開発における Secure Context の例外となるため `getUserMedia()` が利用できます。
-5. 本番は `npm run build` → static 出力を HTTPS 配信（GitHub Pages / Netlify / Cloudflare Pages 等）へデプロイしてください。
-
-## 注意点（重要）
-- `@subspace/reed-solomon-erasure.wasm` 等の WASM パッケージは **実際の API 名が異なる可能性**があります。`encoder.js` / `decoder.js` の `rs.encode` / `rs.decode` 呼び出しが動かない場合は、パッケージの README を確認して呼び出し名を合わせてください。
-- 商用利用時は採用する Reed–Solomon 実装のライセンスを確認してください（多くは MIT/Apache）。また RaptorQ のような特許のあるコードは使わない構成としています。
-
-## ライセンス
-本プロジェクトは MIT ライセンス（`LICENSE`）です。第三者ライブラリのライセンスは `NOTICE` を参照してください。
+## 使い方
+1. 送信側Webアプリをブラウザで開く
+2. 「ファイルを選択」ボタンで送信したいファイルを選ぶ
+3. 「送信開始」ボタンを押すと、QRコード画像が連続表示される
+4. 受信側Webアプリをスマホで開く
+5. スマホのカメラでQRコード画像を撮影し、ファイルを復元する
+6. 復元されたファイルが自動的にダウンロードされる
